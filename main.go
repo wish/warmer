@@ -48,7 +48,7 @@ func main() {
 
 	files := Files{}
 	mu := &sync.Mutex{}
-	err := filepath.Walk(filepath.Clean(flags.Root), func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(filepath.Clean(opts.Root), func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
