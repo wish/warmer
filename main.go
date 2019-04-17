@@ -12,7 +12,6 @@ import (
 
 	"github.com/frostschutz/go-fibmap"
 	flags "github.com/jessevdk/go-flags"
-	"github.com/sirupsen/logrus"
 )
 
 type File struct {
@@ -43,7 +42,6 @@ func main() {
 		if _, ok := err.(*flags.Error); ok {
 			os.Exit(1)
 		}
-		logrus.Fatalf("Error parsing flags: %v", err)
 	}
 
 	files := Files{}
