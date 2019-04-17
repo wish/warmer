@@ -8,8 +8,11 @@ import (
 	"sort"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/frostschutz/go-fibmap"
+	flags "github.com/jessevdk/go-flags"
+	"github.com/sirupsen/logrus"
 )
 
 type File struct {
@@ -26,15 +29,26 @@ func (f Files) Less(i, j int) bool { return f[i].order < f[j].order }
 
 const SSIZE_MAX = 9223372036854775807
 
+type CLIOpts struct {
+	Root            string `long:"root" short:"r" description:"root path to walk from" required:"true"`
+	EnableHibernate bool   `long:"enable-hibernate" description:"sleep forever after finishing, useful if this is a sidecare container"`
+}
+
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Argument required:")
-		fmt.Println("	warmer <dir>")
-		os.Exit(1)
+	var opts CLIOpts
+	parser := flags.NewParser(&opts, flags.Default)
+	if _, err := parser.Parse(); err != nil {
+		// If the error was from the parser, then we can simply return
+		// as Parse() prints the error already
+		if _, ok := err.(*flags.Error); ok {
+			os.Exit(1)
+		}
+		logrus.Fatalf("Error parsing flags: %v", err)
 	}
+
 	files := Files{}
 	mu := &sync.Mutex{}
-	err := filepath.Walk(filepath.Clean(os.Args[1]), func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(filepath.Clean(flags.Root), func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
@@ -81,6 +95,11 @@ func main() {
 		go worker(wg, ch)
 	}
 	wg.Wait()
+	if opts.EnableHibernate {
+		for {
+			time.Sleep(time.Hour)
+		}
+	}
 }
 
 func worker(wg *sync.WaitGroup, files chan File) {
