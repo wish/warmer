@@ -47,16 +47,21 @@ func main() {
 	files := Files{}
 	mu := &sync.Mutex{}
 	err := filepath.Walk(filepath.Clean(opts.Root), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("Error while walking files: %v", err)
+			return err
+		}
 		if info.IsDir() {
 			return nil
 		}
 		f, err := os.Open(path)
 		if err != nil {
+			fmt.Printf("Error opening file: %v", err)
 			return err
 		}
 		exts, errno := fibmap.NewFibmapFile(f).Fiemap(32)
 		if errno != 0 {
-			return fmt.Errorf("fiemap error")
+			return fmt.Errorf("fiemap error: %v", errno)
 		}
 		if len(exts) < 1 {
 			fmt.Printf("no exts found: %v", path)
@@ -77,6 +82,7 @@ func main() {
 			info:  info,
 		})
 		mu.Unlock()
+		f.Close()
 		return nil
 	})
 	if err != nil {
@@ -121,10 +127,12 @@ func sendfile(path string, info os.FileInfo) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	defer f.Close()
 	null, err := os.OpenFile("/dev/null", os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return 0, err
 	}
+	defer null.Close()
 	offset := int64(0)
 	ln := info.Size()
 	chunks := 0
