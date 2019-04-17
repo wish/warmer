@@ -29,8 +29,8 @@ func (f Files) Less(i, j int) bool { return f[i].order < f[j].order }
 const SSIZE_MAX = 9223372036854775807
 
 type CLIOpts struct {
-	Root            string `long:"root" short:"r" description:"root path to walk from" required:"true"`
-	EnableHibernate bool   `long:"enable-hibernate" description:"sleep forever after finishing, useful if this is a sidecare container"`
+	Root          string `long:"root" short:"r" description:"root path to walk from" required:"true"`
+	SleepOnFinish bool   `long:"sleep-on-finish" description:"sleep forever after finishing, useful if this is a sidecar container"`
 }
 
 func main() {
@@ -93,7 +93,7 @@ func main() {
 		go worker(wg, ch)
 	}
 	wg.Wait()
-	if opts.EnableHibernate {
+	if opts.SleepOnFinish {
 		for {
 			time.Sleep(time.Hour)
 		}
